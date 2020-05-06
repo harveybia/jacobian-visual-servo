@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
 )
 
+find_package(Eigen3 REQUIRED)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -120,6 +122,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -137,7 +140,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(servo_node
   src/servo_node.cpp
-  src/uncertain_IK_server.cpp)
+  src/uncertain_IK_server.cpp
+  src/uncertain_IK_server_ros.cpp src/kdc_utils.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
