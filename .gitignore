@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+jacobian-visual-servo/cmake-build-debug/
+jacobian-visual-servo/.idea/
