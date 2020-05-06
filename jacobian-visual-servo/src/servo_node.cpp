@@ -11,7 +11,8 @@
 JacobianServoNode::JacobianServoNode(
     ros::NodeHandle *node_handle, ros::NodeHandle *private_node_handle)
     : nh(*node_handle),
-      pnh(*private_node_handle)
+      pnh(*private_node_handle),
+      itt(*node_handle)
 {
     setup_ros();
     initialize_sub();
@@ -22,9 +23,14 @@ void JacobianServoNode::setup_ros()
 {
     ROS_INFO("Setting up ROS stuff");
     pnh.param<std::string>(
-        "joint_states_topic", joint_states_topic, "/joint_states");
+        "joint_states_topic", joint_states_topic, "/joint_states"
+    );
     pnh.param<int>(
-        "joint_states_dof", dof, 9);
+        "joint_states_dof", dof, 9
+    );
+    pnh.param<std::string>(
+        "ee_cam_topic", cam_im_topic, "/snake_cam/image_color"
+    );
 
     // Periodic timer to trigger control loop
     timer = nh.createTimer(
@@ -33,7 +39,9 @@ void JacobianServoNode::setup_ros()
 
 void JacobianServoNode::initialize_sub()
 {
-    return;
+    cam_im_sub = itt.subscribe(
+        cam_im_topic.c_str(), 1,
+        boost::bind(&JacobianServoNode::im_cb, this, _1));
 }
 
 void JacobianServoNode::initialize_pub()
@@ -66,6 +74,12 @@ void JacobianServoNode::timer_cb(const ros::TimerEvent &event)
     ss << "]";
     ROS_INFO("New target joint state: %s", ss.str().c_str());
     joint_state_pub.publish(joint_state);
+}
+
+void JacobianServoNode::im_cb(const sensor_msgs::ImageConstPtr &im)
+{
+    // ROS_INFO("Received camera frame"); // Confirmed working.
+    // TODO: use visual feedback to servo robot arm
 }
 
 void sigint_handler(int sig)

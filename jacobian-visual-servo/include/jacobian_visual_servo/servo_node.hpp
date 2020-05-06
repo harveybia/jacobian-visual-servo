@@ -7,6 +7,7 @@
 
 #include <ros/ros.h>
 #include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 #include <sensor_msgs/JointState.h>
 
 class JacobianServoNode
@@ -17,6 +18,7 @@ public:
     ~JacobianServoNode() = default;
 
     void timer_cb(const ros::TimerEvent &event);
+    void im_cb(const sensor_msgs::ImageConstPtr &im);
 
 private:
     void initialize_sub();
@@ -28,9 +30,12 @@ private:
 
     // node info
     std::string joint_states_topic;
+    std::string cam_im_topic;
 
     // publishers and subscribers
     ros::Publisher joint_state_pub;
+    image_transport::ImageTransport itt;
+    image_transport::Subscriber cam_im_sub;
 
     // timer triggers
     ros::Timer timer;
