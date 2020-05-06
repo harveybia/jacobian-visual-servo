@@ -1,7 +1,8 @@
 #include "jacobian_visual_servo/servo_node.hpp"
 
+#include <math.h>
+#include <sstream>
 #include <boost/bind.hpp>
-
 #include <signal.h>
 
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -20,8 +21,10 @@ JacobianServoNode::JacobianServoNode(
 void JacobianServoNode::setup_ros()
 {
     ROS_INFO("Setting up ROS stuff");
-    pnh.param<std::string>("joint_states_topic", joint_states_topic,
-        "/joint_states");
+    pnh.param<std::string>(
+        "joint_states_topic", joint_states_topic, "/joint_states");
+    pnh.param<int>(
+        "joint_states_dof", dof, 9);
 
     // Periodic timer to trigger control loop
     timer = nh.createTimer(
@@ -35,14 +38,34 @@ void JacobianServoNode::initialize_sub()
 
 void JacobianServoNode::initialize_pub()
 {
-    // depth image publisher
+    // joint state publisher
     joint_state_pub = nh.advertise<sensor_msgs::JointState>(
         joint_states_topic, 1);
+    joint_state.name.resize(dof);
+    for (int i = 0; i < dof; i++)
+    {
+        std::stringstream ss;
+        // Unknown robot configuration, use generic joint names
+        ss << "joint_" << i;
+        joint_state.name[i] = ss.str();
+    }
+    joint_state.position.resize(dof);
 }
 
 void JacobianServoNode::timer_cb(const ros::TimerEvent &event)
 {
-    ROS_INFO("timer_cb: %u", event.current_real.nsec);
+    joint_state.header.stamp = ros::Time::now();
+    std::stringstream ss;
+    ss << "[ ";
+    for (int i = 0; i < dof; i++)
+    {
+        // XXX: Change this to actual control output
+        joint_state.position[i] = sin(event.current_real.nsec) / 2;
+        ss << joint_state.position[i] << " ";
+    }
+    ss << "]";
+    ROS_INFO("New target joint state: %s", ss.str().c_str());
+    joint_state_pub.publish(joint_state);
 }
 
 void sigint_handler(int sig)

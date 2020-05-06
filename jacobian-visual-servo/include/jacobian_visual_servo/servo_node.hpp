@@ -35,6 +35,12 @@ private:
     // timer triggers
     ros::Timer timer;
 
+    // control parameters
+    int dof;
+
+    // control states
+    sensor_msgs::JointState joint_state;
+
 }; // class JacobianServoNode
 
 #endif /* __SERVO_NODE_HPP__ */
