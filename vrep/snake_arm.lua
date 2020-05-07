@@ -29,6 +29,9 @@ end
 function sysCall_threadmain()
     -- Put some initialization code here
 
+    -- Disable backlash by setting this to 0
+    backlashEnable=0
+
     sub=simROS.subscribe('/joint_states','sensor_msgs/JointState',
         'subscriber_callback',1)
     receivedMessages={}
@@ -77,6 +80,12 @@ function sysCall_threadmain()
     backlashHandles[7]=sim.getObjectHandle(jointNames[7].."_backlash")
     backlashHandles[8]=sim.getObjectHandle(jointNames[8].."_backlash")
     backlashHandles[9]=sim.getObjectHandle(jointNames[9].."_backlash")
+
+    
+    for i=1,9,1 do
+        sim.setObjectInt32Parameter(
+            backlashHandles[i],sim_jointintparam_motor_enabled,1-backlashEnable)
+    end
 
     rosInterfacePresent = sim.isPluginLoaded('ROSInterface')
     if rosInterfacePresent then
