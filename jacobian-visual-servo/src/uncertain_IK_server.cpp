@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <jacobian_visual_servo/kdc_utils.hpp>
 
+
 UncertainIKServer::UncertainIKServer(const Matrix4d &_gst_init,
     const Matrix4d& _gd)
 : gst_init_(_gst_init)

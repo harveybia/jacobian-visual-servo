@@ -31,7 +31,7 @@ Matrix4d& exp_twist(const VectorXd& twist, double theta)
 
 MatrixXd& calcAdj(const Matrix4d& g)
 {
-  MatrixXd adg(6);
+  MatrixXd adg(6, 6);
   Matrix3d R = g.block<3,3>(0,0);
   Vector3d p = g.block<1,3>(0,3);
   adg.topLeftCorner<3,3>() = R;
@@ -54,7 +54,7 @@ MatrixXd& calcJ(std::vector<VectorXd>& twists, VectorXd& theta)
 {
   int n = twists.size();
   Matrix4d g = Matrix4d::Identity();
-  MatrixXd J(6);
+  MatrixXd J(6, 6);
 
   for (int i = 0; i < n; i++)
   {
