@@ -18,10 +18,9 @@ class UncertainIKServer
 {
 public:
   /**
-   * Constructor todo what should constructor do?
+   * Constructor
    */
-  explicit UncertainIKServer(const Matrix4d& _gst_init,
-      const Matrix4d& _gd);
+  explicit UncertainIKServer();
 
   void setGd(const Matrix4d& gd);
   /**
@@ -33,16 +32,10 @@ public:
   virtual bool sendJointAngles(const VectorXd &theta_cmd) = 0;
 
   /**
-   * interface for receiving joint angle command
+   * interface for receiving joint angle and gst ground truth
    * @return
    */
-  virtual bool recvJointAngles() = 0;
-
-  /**
-   * interface for receiving tool pose ground truth.
-   * @return
-   */
-  virtual bool recvGstGT() = 0;
+  virtual bool recvRobotStates() = 0;
 
   /**
    * Process: perform IK step, check if reached goal, check FK/GroundTruth;
@@ -78,10 +71,11 @@ private:
    */
   bool checkFK();
 
+protected:
   VectorXd theta_; // joint angles
   std::vector<VectorXd> twists_; // twists of joints
   Matrix4d gst_gt_; // ground truth of tool pose
-  const Matrix4d gst_init_;
+  Matrix4d gst_init_;
   Matrix4d gd_; // desired gst
 
   constexpr static const double FINITE_THETA_STEP = 0.01;

@@ -8,12 +8,10 @@
 #include <jacobian_visual_servo/kdc_utils.hpp>
 
 
-UncertainIKServer::UncertainIKServer(const Matrix4d &_gst_init,
-    const Matrix4d& _gd)
-: gst_init_(_gst_init)
-, gd_(_gd)
+UncertainIKServer::UncertainIKServer()
+: gst_init_(Matrix4d::Zero())
+, gd_(Matrix4d::Zero())
 {
-
 }
 
 void UncertainIKServer::setGd(const Matrix4d &gd)
@@ -24,20 +22,21 @@ void UncertainIKServer::setGd(const Matrix4d &gd)
 
 bool UncertainIKServer::process()
 {
-  if (!checkFK())
+  if (twists_.empty() || !checkFK())
   {
     MatrixXd J;
     finiteMotionJ(J);
     calcTwistFromJ(J);
   }
+  if (gd_ == Matrix4d::Zero())
+    return false;
   IKStep();
   return diffG(gd_, gst_gt_, true) < 0.01;
 }
 
 bool UncertainIKServer::IKStep()
 {
-  recvJointAngles();
-  recvGstGT();
+  recvRobotStates();
 
   Quaterniond q_cur(gst_gt_.topLeftCorner<3,3>());
   Quaterniond qd(gd_.topLeftCorner<3,3>());
@@ -82,7 +81,10 @@ bool UncertainIKServer::finiteMotionJ(MatrixXd &J)
 
 bool UncertainIKServer::calcTwistFromJ(const MatrixXd &J)
 {
+  if (twists_.size() != theta_.rows())
+    twists_.resize(theta_.rows());
   Matrix4d g = Matrix4d::Identity();
+
   twists_[0] = J.col(0);
   for (int i = 1; i < twists_.size(); i++)
   {
@@ -94,8 +96,7 @@ bool UncertainIKServer::calcTwistFromJ(const MatrixXd &J)
 
 bool UncertainIKServer::checkFK()
 {
-  recvGstGT();
-  recvJointAngles();
+  recvRobotStates();
 
   Matrix4d gst_fk = Matrix4d::Identity();
   for (int i = 0; i < twists_.size(); i++)
