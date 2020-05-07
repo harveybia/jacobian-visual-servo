@@ -79,8 +79,8 @@ protected:
   Matrix4d gd_; // desired gst
 
   static const double FINITE_THETA_STEP;
-  static const double KD;
-  static const double KO;
+  static double KD;
+  static double KO;
 };
 
 #endif //JACOBIAN_VISUAL_SERVO_UNCERTAIN_IK_SERVER_HPP

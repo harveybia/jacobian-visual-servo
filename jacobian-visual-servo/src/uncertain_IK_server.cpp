@@ -7,9 +7,12 @@
 #include <unistd.h>
 #include <jacobian_visual_servo/kdc_utils.hpp>
 
-const double UncertainIKServer::FINITE_THETA_STEP = 0.003;
-const double UncertainIKServer::KD = 0.5;
-const double UncertainIKServer::KO = 0.2;
+const double UncertainIKServer::FINITE_THETA_STEP = 0.001;
+double UncertainIKServer::KD = 0.2;
+double UncertainIKServer::KO = 0.1;
+
+using std::cout;
+using std::endl;
 
 UncertainIKServer::UncertainIKServer()
 : gst_init_(Matrix4d::Zero())
@@ -27,12 +30,18 @@ bool UncertainIKServer::process()
 {
   if (twists_.empty() || !checkFK())
   {
+    cout << "Estimate Jacobian with small motion..." << endl;
     MatrixXd J;
     finiteMotionJ(J);
     calcTwistFromJ(J);
+    checkFK();
   }
   if (gd_ == Matrix4d::Zero())
+  {
+    cout << "Waiting for a goal pose..." << endl;
     return false;
+  }
+
   bool reach_goal = IKStep();
   return reach_goal;
 }
@@ -55,7 +64,11 @@ bool UncertainIKServer::IKStep()
   MatrixXd J_pinv = J.completeOrthogonalDecomposition().pseudoInverse();
   VectorXd dtheta = J_pinv * V;
 
-  VectorXd theta_cmd = theta_ + dtheta * 0.002;
+  static double motion_thresh = 0.3;
+  if (dtheta.norm() > motion_thresh)
+    dtheta /= dtheta.norm() / motion_thresh;
+
+  VectorXd theta_cmd = theta_ + dtheta;
   sendJointAngles(theta_cmd);
 
   if (diffG(gd_, gst_gt_, true) < 0.01)
@@ -81,7 +94,7 @@ bool UncertainIKServer::finiteMotionJ(MatrixXd &J)
     // load up Jacobian
     Matrix4d gdot = gst_gt_ - gst_prev;
     VectorXd Vdt = calcV(gdot, gst_prev);
-    J.col(i) = Vdt / FINITE_THETA_STEP;
+    J.col(i) = Vdt / (theta_ - theta_prev).norm();
 
     // bring theta back
     sendJointAngles(theta_prev);
@@ -116,6 +129,7 @@ bool UncertainIKServer::checkFK()
   }
   gst_fk *= gst_init_;
   double g_diff = diffG(gst_fk, gst_gt_);
-  return g_diff < 0.5;
+  cout << "FK diff: " << g_diff << endl;
+  return g_diff < 0.01;
 }
 

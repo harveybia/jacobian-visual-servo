@@ -92,7 +92,8 @@ double diffG(const Matrix4d& g1, const Matrix4d& g2, bool verbose)
 {
   double dp_norm = (g1.topRightCorner<3,1>() - g2.topRightCorner<3,1>()).norm();
   Matrix3d dR = g1.topLeftCorner<3,3>() * g2.topLeftCorner<3,3>().transpose();
-  double d_angle = acos((dR.trace() - 1) / 2);
+  double d_angle = dR.trace() < 3.0 ? acos((dR.trace() - 1) / 2) : 0.0;
+
 
   if (verbose)
   {
