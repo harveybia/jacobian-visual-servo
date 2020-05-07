@@ -30,7 +30,7 @@ function sysCall_threadmain()
     -- Put some initialization code here
 
     -- Disable backlash by setting this to 0
-    backlashEnable=0
+    backlashEnable=1
 
     sub=simROS.subscribe('/joint_states','sensor_msgs/JointState',
         'subscriber_callback',1)
