@@ -4,17 +4,17 @@
 
 #include <jacobian_visual_servo/kdc_utils.hpp>
 
-Matrix4d& Rt2T(const Matrix3d& R, const Vector3d& t)
+Matrix4d Rt2T(const Matrix3d& R, const Vector3d& t)
 {
   Matrix4d T = Matrix4d::Zero();
   T.block<3,3>(0,0) = R;
-  T.block<1,3>(0,3) = t;
+  T.block<3,1>(0,3) = t;
   T(3,3) = 1.0;
 
   return T;
 }
 
-Matrix4d& exp_twist(const VectorXd& twist, double theta)
+Matrix4d exp_twist(const VectorXd& twist, double theta)
 {
   Vector3d v = twist.head<3>();
   Vector3d w = twist.tail<3>();
@@ -29,11 +29,11 @@ Matrix4d& exp_twist(const VectorXd& twist, double theta)
   }
 }
 
-MatrixXd& calcAdj(const Matrix4d& g)
+MatrixXd calcAdj(const Matrix4d& g)
 {
   MatrixXd adg(6, 6);
   Matrix3d R = g.block<3,3>(0,0);
-  Vector3d p = g.block<1,3>(0,3);
+  Vector3d p = g.block<3,1>(0,3);
   adg.topLeftCorner<3,3>() = R;
   adg.topRightCorner<3,3>() = uphat(p) * R;
   adg.bottomLeftCorner<3,3>().fill(0.);
@@ -41,7 +41,7 @@ MatrixXd& calcAdj(const Matrix4d& g)
   return adg;
 }
 
-Matrix3d& uphat(const Vector3d& v)
+Matrix3d uphat(const Vector3d& v)
 {
   Matrix3d vh;
   vh << 0    , -v(2), v(1),
@@ -50,11 +50,11 @@ Matrix3d& uphat(const Vector3d& v)
   return vh;
 }
 
-MatrixXd& calcJ(std::vector<VectorXd>& twists, VectorXd& theta)
+MatrixXd calcJ(std::vector<VectorXd>& twists, VectorXd& theta)
 {
   int n = twists.size();
   Matrix4d g = Matrix4d::Identity();
-  MatrixXd J(6, 6);
+  MatrixXd J(6, theta.rows());
 
   for (int i = 0; i < n; i++)
   {
@@ -65,7 +65,7 @@ MatrixXd& calcJ(std::vector<VectorXd>& twists, VectorXd& theta)
   return J;
 }
 
-Vector3d& downhat(const Matrix3d& vh)
+Vector3d downhat(const Matrix3d& vh)
 {
   Vector3d v((vh(2,1) - vh(1,2)) / 2,
              (vh(0,2) - vh(2,0)) / 2,
@@ -73,7 +73,7 @@ Vector3d& downhat(const Matrix3d& vh)
   return v;
 }
 
-VectorXd& calcV(const Matrix4d& gdot, const Matrix4d& g)
+VectorXd calcV(const Matrix4d& gdot, const Matrix4d& g)
 {
   VectorXd V(6);
 

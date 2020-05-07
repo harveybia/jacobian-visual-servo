@@ -14,15 +14,15 @@
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-void Pose2Trans(const geometry_msgs::Pose& pose, Matrix4d T)
+void Pose2Trans(geometry_msgs::PoseConstPtr pose, Matrix4d& T)
 {
   T = Matrix4d::Zero();
 
-  Quaterniond qst(pose.orientation.w, pose.orientation.x, pose.orientation.y,
-                  pose.orientation.z);
+  Quaterniond qst(pose->orientation.w, pose->orientation.x, pose->orientation.y,
+                  pose->orientation.z);
   T.topLeftCorner<3,3>() = qst.toRotationMatrix();
   T.topRightCorner<3,1>() =
-      Vector3d(pose.position.x, pose.position.y, pose.position.z);
+      Vector3d(pose->position.x, pose->position.y, pose->position.z);
   T(3,3) = 1.0;
 }
 
@@ -37,8 +37,11 @@ UncertainIKServerROS::UncertainIKServerROS(
   initialize_sub();
   initialize_pub();
 
-
-  recvRobotStates();
+  theta_ = VectorXd(dof);
+  theta_.fill(NULL);
+  gst_init_ = Matrix4d::Zero();
+  while (theta_(0) == NULL || gst_init_ == Matrix4d::Zero())
+    recvRobotStates();
 }
 
 void UncertainIKServerROS::setup_ros()
@@ -54,16 +57,16 @@ void UncertainIKServerROS::setup_ros()
       "ee_cam_topic", cam_im_topic, "/snake_cam/image_color"
   );
 
-  // Periodic timer to trigger control loop
-  timer = nh.createTimer(
-      ros::Duration(1),&UncertainIKServerROS::timer_cb, this);
 }
 
 void UncertainIKServerROS::initialize_sub()
 {
-  cam_im_sub = itt.subscribe(
-      cam_im_topic.c_str(), 1,
-      boost::bind(&UncertainIKServerROS::im_cb, this, _1));
+  joint_angles_sub_ = nh.subscribe("/snake_arm/joint_states", 10,
+      &UncertainIKServerROS::joint_angles_cb, this);
+  gd_sub_ = nh.subscribe("/gst_desired", 10,
+      &UncertainIKServerROS::gd_cb, this);
+  gst_gt_sub_ = nh.subscribe("/snake_arm/pose", 10,
+      &UncertainIKServerROS::gst_gt_cb, this);
 }
 
 void UncertainIKServerROS::initialize_pub()
@@ -82,27 +85,6 @@ void UncertainIKServerROS::initialize_pub()
   joint_state.position.resize(dof);
 }
 
-void UncertainIKServerROS::timer_cb(const ros::TimerEvent &event)
-{
-  joint_state.header.stamp = ros::Time::now();
-  std::stringstream ss;
-  ss << "[ ";
-  for (int i = 0; i < dof; i++)
-  {
-    // XXX: Change this to actual control output
-    joint_state.position[i] = sin(event.current_real.nsec) / 2;
-    ss << joint_state.position[i] << " ";
-  }
-  ss << "]";
-  ROS_INFO("New target joint state: %s", ss.str().c_str());
-  joint_state_pub.publish(joint_state);
-}
-
-void UncertainIKServerROS::im_cb(const sensor_msgs::ImageConstPtr &im)
-{
-  // ROS_INFO("Received camera frame"); // Confirmed working.
-  // TODO: use visual feedback to servo robot arm
-}
 
 bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
 {
@@ -117,7 +99,7 @@ bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
 
   // wait until robot is in position.
   int itn_cnt = 0;
-  while ((theta_cmd - theta_).norm() > 0.01 && (++itn_cnt) < 10)
+  while ((theta_cmd - theta_).norm() > 0.001 && (++itn_cnt) < 10)
   {
     recvRobotStates();
   }
@@ -134,21 +116,22 @@ bool UncertainIKServerROS::recvRobotStates()
 
 void UncertainIKServerROS::gst_gt_cb(geometry_msgs::PoseConstPtr msg)
 {
-  Pose2Trans(*msg, gst_gt_);
+  Pose2Trans(msg, gst_gt_);
   if (gst_init_ == Matrix4d::Zero())
     gst_init_ = gst_gt_;
 }
 
 void UncertainIKServerROS::joint_angles_cb(sensor_msgs::JointStateConstPtr msg)
 {
-  assert(theta_.size() == msg->position.size());
+  if (theta_.rows() != msg->position.size())
+    theta_.resize(msg->position.size());
   for (int i = 0; i < msg->position.size(); i++)
     theta_(i) = msg->position[i];
 }
 
 void UncertainIKServerROS::gd_cb(geometry_msgs::PoseConstPtr msg)
 {
-  Pose2Trans(*msg, gd_);
+  Pose2Trans(msg, gd_);
 }
 
 void sigint_handler(int sig)
@@ -168,6 +151,10 @@ int main(int argc, char **argv)
 
   signal(SIGINT, sigint_handler);
 
-  ros::spin();
+  while (ros::ok())
+  {
+    ros::spinOnce();
+    servo_node.process();
+  }
   return 0;
 }

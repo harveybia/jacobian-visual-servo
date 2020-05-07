@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <jacobian_visual_servo/kdc_utils.hpp>
 
+const double UncertainIKServer::FINITE_THETA_STEP = 0.003;
+const double UncertainIKServer::KD = 0.5;
+const double UncertainIKServer::KO = 0.2;
 
 UncertainIKServer::UncertainIKServer()
 : gst_init_(Matrix4d::Zero())
@@ -30,8 +33,8 @@ bool UncertainIKServer::process()
   }
   if (gd_ == Matrix4d::Zero())
     return false;
-  IKStep();
-  return diffG(gd_, gst_gt_, true) < 0.01;
+  bool reach_goal = IKStep();
+  return reach_goal;
 }
 
 bool UncertainIKServer::IKStep()
@@ -49,17 +52,23 @@ bool UncertainIKServer::IKStep()
   V.tail<3>() = q_v * q_err.w() * KO;
 
   MatrixXd J = calcJ(twists_, theta_);
-  VectorXd dtheta = J.completeOrthogonalDecomposition().pseudoInverse() * V;
+  MatrixXd J_pinv = J.completeOrthogonalDecomposition().pseudoInverse();
+  VectorXd dtheta = J_pinv * V;
 
   VectorXd theta_cmd = theta_ + dtheta * 0.002;
   sendJointAngles(theta_cmd);
 
-  return true;
+  if (diffG(gd_, gst_gt_, true) < 0.01)
+  {
+    gd_ = Matrix4d::Zero();
+    return true;
+  }
+  return false;
 }
 
 bool UncertainIKServer::finiteMotionJ(MatrixXd &J)
 {
-  J.resize(6,6);
+  J.resize(6, theta_.rows());
   VectorXd theta_prev = theta_;
   Matrix4d gst_prev = gst_gt_;
   for (int i = 0; i < theta_.rows(); i++)
@@ -73,8 +82,10 @@ bool UncertainIKServer::finiteMotionJ(MatrixXd &J)
     Matrix4d gdot = gst_gt_ - gst_prev;
     VectorXd Vdt = calcV(gdot, gst_prev);
     J.col(i) = Vdt / FINITE_THETA_STEP;
+
+    // bring theta back
+    sendJointAngles(theta_prev);
   }
-  sendJointAngles(theta_prev); // bring joints back
 
   return true;
 }
@@ -104,7 +115,7 @@ bool UncertainIKServer::checkFK()
     gst_fk *= exp_twist(twists_[i], theta_(i));
   }
   gst_fk *= gst_init_;
-
-  return diffG(gst_fk, gst_gt_) < 0.01;
+  double g_diff = diffG(gst_fk, gst_gt_);
+  return g_diff < 0.5;
 }
 

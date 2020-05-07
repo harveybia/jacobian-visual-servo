@@ -19,9 +19,6 @@ public:
                     ros::NodeHandle *private_node_handle);
   ~UncertainIKServerROS() = default;
 
-  void timer_cb(const ros::TimerEvent &event);
-  void im_cb(const sensor_msgs::ImageConstPtr &im);
-
   void gst_gt_cb(geometry_msgs::PoseConstPtr msg);
 
   void joint_angles_cb(sensor_msgs::JointStateConstPtr msg);
@@ -47,10 +44,7 @@ private:
   // publishers and subscribers
   ros::Publisher joint_state_pub;
   image_transport::ImageTransport itt;
-  image_transport::Subscriber cam_im_sub;
-
-  // timer triggers
-  ros::Timer timer;
+  ros::Subscriber joint_angles_sub_, gd_sub_, gst_gt_sub_;
 
   // control parameters
   int dof;
