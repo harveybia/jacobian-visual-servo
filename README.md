@@ -12,6 +12,7 @@ Spring 2020.
 ([Install CoppeliaSim](https://www.coppeliarobotics.com/downloads))
 1. CoppeliaSim ROS 1.0 Plugin
 (Copy compiledRosPlugins/libsimExtROSInterface.so out to installation dir)
+1. Apriltag: `rosdep install --from-paths src --ignore-src -r -y`
 
 ### Optional Dependencies
 
