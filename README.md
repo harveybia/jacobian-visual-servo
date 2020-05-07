@@ -42,6 +42,17 @@ cd <CoppeliaSim_Installation_Dir>
 rosrun jacobian-visual-servo servo_node
 ```
 
+#### Running April Tag localization
+1. april tag node
+```sh
+roslaunch apriltag_ros continuous_detection.launch
+```
+
+2. camera info publisher node
+```
+roslaunch camera_info_publisher caminfo_pub.launch
+```
+
 ## Authors
 
 - Haowen (Harvey) Shi (haowensh@andrew.cmu.edu)
