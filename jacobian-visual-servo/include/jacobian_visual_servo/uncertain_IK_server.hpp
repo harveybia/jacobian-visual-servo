@@ -71,8 +71,15 @@ private:
    */
   bool checkFK();
 
+  /**
+   * Reset gst_init (gst(0)) and theta_init
+   * @return
+   */
+  bool resetStateInit();
+
 protected:
   VectorXd theta_; // joint angles
+  VectorXd theta_init_;
   std::vector<VectorXd> twists_; // twists of joints
   Matrix4d gst_gt_; // ground truth of tool pose
   Matrix4d gst_init_;

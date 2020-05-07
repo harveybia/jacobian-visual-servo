@@ -39,6 +39,8 @@ UncertainIKServerROS::UncertainIKServerROS(
 
   theta_ = VectorXd(dof);
   theta_.fill(NULL);
+  theta_init_.resize(dof);
+  theta_init_.fill(0);
   gst_init_ = Matrix4d::Zero();
   while (theta_(0) == NULL || gst_init_ == Matrix4d::Zero())
     recvRobotStates();
@@ -93,7 +95,7 @@ bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
 
   for (int i = 0; i < dof; i++)
   {
-    joint_state.position[i] = theta_cmd(i);
+    joint_state.position[i] = theta_cmd(i) + theta_init_(i);
   }
   joint_state_pub.publish(joint_state);
 
@@ -127,10 +129,10 @@ void UncertainIKServerROS::gst_gt_cb(geometry_msgs::PoseConstPtr msg)
 
 void UncertainIKServerROS::joint_angles_cb(sensor_msgs::JointStateConstPtr msg)
 {
-  if (theta_.rows() != msg->position.size())
-    theta_.resize(msg->position.size());
+  assert(theta_.rows() == msg->position.size());
+
   for (int i = 0; i < msg->position.size(); i++)
-    theta_(i) = msg->position[i];
+    theta_(i) = msg->position[i] - theta_init_(i);
 }
 
 void UncertainIKServerROS::gd_cb(geometry_msgs::PoseConstPtr msg)

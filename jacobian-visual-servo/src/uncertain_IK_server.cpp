@@ -31,6 +31,7 @@ bool UncertainIKServer::process()
   if (twists_.empty() || !checkFK())
   {
     cout << "Estimate Jacobian with small motion..." << endl;
+    resetStateInit();
     MatrixXd J;
     finiteMotionJ(J);
     calcTwistFromJ(J);
@@ -131,5 +132,14 @@ bool UncertainIKServer::checkFK()
   double g_diff = diffG(gst_fk, gst_gt_);
   cout << "FK diff: " << g_diff << endl;
   return g_diff < 0.01;
+}
+
+bool UncertainIKServer::resetStateInit()
+{
+  recvRobotStates();
+  gst_init_ = gst_gt_;
+  theta_init_ += theta_;
+  theta_.fill(0.0);
+  return true;
 }
 
