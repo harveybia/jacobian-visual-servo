@@ -18,30 +18,24 @@ class UncertainIKServer
 {
 public:
   /**
-   * Constructor todo what should constructor do?
+   * Constructor
    */
   explicit UncertainIKServer();
 
+  void setGd(const Matrix4d& gd);
   /**
-   * interface for sending joint angle command
+   * interface for sending joint angle command, block until theta = theta_cmd,
+   * also update gst_gt_.
    * @param theta_cmd input command
    * @return
    */
   virtual bool sendJointAngles(const VectorXd &theta_cmd) = 0;
 
   /**
-   * interface for receiving joint angle command
-   * @param theta output joint angles
+   * interface for receiving joint angle and gst ground truth
    * @return
    */
-  bool recvJointAngles(const VectorXd& theta);
-
-  /**
-   * interface for receiving tool pose ground truth.
-   * @param gst pose of tool frame in base frame
-   * @return
-   */
-  bool recvGstGT(const Matrix4d& gst);
+  virtual bool recvRobotStates() = 0;
 
   /**
    * Process: perform IK step, check if reached goal, check FK/GroundTruth;
@@ -52,11 +46,10 @@ public:
 
 private:
   /**
-   * calculate an IK step
-   * @param theta_des output desired joint angles
+   * calculate an IK step, and send new joint angle commands to environment
    * @return
    */
-  bool IKStep(VectorXd &theta_des);
+  bool IKStep();
 
   /**
    * Use finite motion to compute Jacobian matrix
@@ -78,9 +71,16 @@ private:
    */
   bool checkFK();
 
+protected:
   VectorXd theta_; // joint angles
   std::vector<VectorXd> twists_; // twists of joints
   Matrix4d gst_gt_; // ground truth of tool pose
+  Matrix4d gst_init_;
+  Matrix4d gd_; // desired gst
+
+  constexpr static const double FINITE_THETA_STEP = 0.01;
+  constexpr static const double KD = 10;
+  constexpr static const double KO = 10;
 };
 
 #endif //JACOBIAN_VISUAL_SERVO_UNCERTAIN_IK_SERVER_HPP
