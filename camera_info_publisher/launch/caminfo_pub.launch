@@ -5,10 +5,10 @@
       image_topic: /snake_cam/color_image
       img_height: 480
       img_width: 640
-      fx = 579.7038
-      fy = 578.5113
-      cx = 323.2137
-      cy = 235.8405
+      fx: 579.7038
+      fy: 578.5113
+      cx: 323.2137
+      cy: 235.8405
     </rosparam>
   </node>
 

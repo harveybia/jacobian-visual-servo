@@ -60,7 +60,13 @@ int main(int argc, char **argv) {
   // setup subscriber and publisher
   std::string image_topic;
   pnh.getParam("image_topic", image_topic);
-  std::string camera_info_topic = image_topic + "_camera_info";
+  ROS_INFO_STREAM("image_topic: " << image_topic);
+  std::string camera_info_topic =
+      image_topic.substr(
+          0, image_topic.substr(1, image_topic.length()).find('/') + 1) +
+      "/camera_info";
+  ROS_INFO_STREAM("camera_info_topic: " << camera_info_topic);
+
   ros::Publisher pub =
       nh.advertise<sensor_msgs::CameraInfo>(camera_info_topic, 1);
   image_transport::Subscriber sub =
