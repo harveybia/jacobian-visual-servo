@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>camera_info_publisher</name>
+  <name>apriltag_utils</name>
   <version>0.0.0</version>
-  <description>The camera_info_publisher package</description>
+  <description>The apriltag_utils package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/camera_info_publisher</url> -->
+  <!-- <url type="website">http://wiki.ros.org/apriltag_utils</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
