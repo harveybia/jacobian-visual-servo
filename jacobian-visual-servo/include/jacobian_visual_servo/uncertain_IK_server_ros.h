@@ -40,6 +40,7 @@ private:
   // node info
   std::string joint_states_topic;
   std::string cam_im_topic;
+  std::string joint_angles_topic;
 
   // publishers and subscribers
   ros::Publisher joint_state_pub;

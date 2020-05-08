@@ -11,6 +11,9 @@
 #include <boost/bind.hpp>
 #include <signal.h>
 
+using std::cout;
+using std::endl;
+
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
@@ -58,12 +61,19 @@ void UncertainIKServerROS::setup_ros()
   pnh.param<std::string>(
       "ee_cam_topic", cam_im_topic, "/snake_cam/image_color"
   );
-
+  pnh.param<std::string>(
+      "joint_angles_topic", joint_angles_topic, "/snake_arm/joint_states"
+  );
+  cout << "*** ROS params ***:" << endl
+       << "  Joint cmd topic    : " << joint_states_topic << endl
+       << "  Joint state dof    : " << dof << endl
+       << "  Joint angles topic : " << joint_angles_topic << endl
+       << "*******************\n";
 }
 
 void UncertainIKServerROS::initialize_sub()
 {
-  joint_angles_sub_ = nh.subscribe("/snake_arm/joint_states", 10,
+  joint_angles_sub_ = nh.subscribe(joint_angles_topic, 10,
       &UncertainIKServerROS::joint_angles_cb, this);
   gd_sub_ = nh.subscribe("/gst_desired", 10,
       &UncertainIKServerROS::gd_cb, this);
