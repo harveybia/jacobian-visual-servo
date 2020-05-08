@@ -1,4 +1,5 @@
 <launch>
+    <node name="snake_6_mapper" pkg="jacobian-visual-servo" type="snake_6_mapper.py"/>
     <node name="snake_6_IK_server" pkg="jacobian-visual-servo" type="uncertain_IK_server" output="screen">
         <param name="~joint_states_topic" type="string" value="/snake_6/joint_cmd"/>
         <param name="~joint_angles_topic" type="string" value="/snake_6/joint_states"/>
