@@ -17,6 +17,22 @@ using std::endl;
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
+static bool are_poses_equal(
+  geometry_msgs::Pose p1,
+  geometry_msgs::Pose p2)
+{
+  double eps = 0.001;
+  return (
+    (p1.position.x - p2.position.x < eps) &&
+    (p1.position.y - p2.position.y < eps) &&
+    (p1.position.z - p2.position.z < eps) &&
+    (p1.orientation.w - p2.orientation.w < eps) &&
+    (p1.orientation.x - p2.orientation.x < eps) &&
+    (p1.orientation.y - p2.orientation.y < eps) &&
+    (p1.orientation.z - p2.orientation.z < eps)
+  );
+}
+
 void Pose2Trans(geometry_msgs::PoseConstPtr pose, Matrix4d& T)
 {
   T = Matrix4d::Zero();
@@ -148,7 +164,13 @@ void UncertainIKServerROS::joint_angles_cb(sensor_msgs::JointStateConstPtr msg)
 
 void UncertainIKServerROS::gd_cb(geometry_msgs::PoseConstPtr msg)
 {
-  Pose2Trans(msg, gd_);
+  static geometry_msgs::Pose prev_pose;
+
+  if (!are_poses_equal(*msg, prev_pose))
+  {
+    Pose2Trans(msg, gd_);
+    prev_pose = *msg;
+  }
 }
 
 void sigint_handler(int sig)
