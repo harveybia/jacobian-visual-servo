@@ -12,4 +12,7 @@
     </rosparam>
   </node>
 
+  <node pkg="apriltag_utils" type="ee_pose_publisher_node" name="ee_pose_publisher" output="screen">
+  </node>
+
 </launch>
