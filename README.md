@@ -50,7 +50,7 @@ roslaunch apriltag_ros continuous_detection.launch
 
 2. camera info publisher node
 ```
-roslaunch camera_info_publisher caminfo_pub.launch
+roslaunch apriltag_utils caminfo_pub.launch
 ```
 
 ## Authors

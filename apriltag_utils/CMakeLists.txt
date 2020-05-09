@@ -10,7 +10,9 @@ project(apriltag_utils)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
+  geometry_msgs
   image_transport
+  tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -134,6 +136,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(camera_info_publisher_node src/camera_info_publisher.cpp)
+add_executable(ee_pose_publisher_node src/ee_pose_publisher.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -147,6 +150,10 @@ add_executable(camera_info_publisher_node src/camera_info_publisher.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(camera_info_publisher_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(ee_pose_publisher_node
   ${catkin_LIBRARIES}
 )
 
