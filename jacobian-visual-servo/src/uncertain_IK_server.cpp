@@ -85,6 +85,9 @@ bool UncertainIKServer::finiteMotionJ(MatrixXd &J)
   J.resize(6, theta_.rows());
   VectorXd theta_prev = theta_;
   Matrix4d gst_prev = gst_gt_;
+
+  // lockRobotFrictionJoints(true);
+
   for (int i = 0; i < theta_.rows(); i++)
   {
     // set finite motion command
@@ -100,6 +103,8 @@ bool UncertainIKServer::finiteMotionJ(MatrixXd &J)
     // bring theta back
     sendJointAngles(theta_prev);
   }
+
+  // lockRobotFrictionJoints(false);
 
   return true;
 }

@@ -80,10 +80,14 @@ void UncertainIKServerROS::setup_ros()
   pnh.param<std::string>(
       "joint_angles_topic", joint_angles_topic, "/snake_arm/joint_states"
   );
+  pnh.param<std::string>(
+      "friction_joint_lock_topic", friction_joint_lock_topic, "/snake_arm/lock"
+  );
   cout << "*** ROS params ***:" << endl
        << "  Joint cmd topic    : " << joint_states_topic << endl
        << "  Joint state dof    : " << dof << endl
        << "  Joint angles topic : " << joint_angles_topic << endl
+       << "  Joint lock topic   : " << friction_joint_lock_topic << endl
        << "*******************\n";
 }
 
@@ -111,11 +115,17 @@ void UncertainIKServerROS::initialize_pub()
     joint_state.name[i] = ss.str();
   }
   joint_state.position.resize(dof);
+
+  friction_joint_lock_pub = nh.advertise<std_msgs::Bool>(
+      friction_joint_lock_topic, 1);
 }
 
 
 bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
 {
+  // Lock friction joints while executing motion
+  // lockRobotFrictionJoints(true);
+
   // send command
   assert(dof == theta_cmd.rows());
 
@@ -137,6 +147,8 @@ bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
     recvRobotStates();
   }
 
+  // lockRobotFrictionJoints(false);
+
   return itn_cnt < 10;
 }
 
@@ -144,6 +156,14 @@ bool UncertainIKServerROS::recvRobotStates()
 {
   usleep(1e5); // sleep 100 ms
   ros::spinOnce();
+  return true;
+}
+
+bool UncertainIKServerROS::lockRobotFrictionJoints(bool lock)
+{
+  std_msgs::Bool locker;
+  locker.data = lock;
+  friction_joint_lock_pub.publish(locker);
   return true;
 }
 

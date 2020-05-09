@@ -38,6 +38,14 @@ public:
   virtual bool recvRobotStates() = 0;
 
   /**
+   * @brief locks robot frictional joints, assumption where joints
+   *        don't slip while estimating Jacobian.
+   * 
+   * @return true if call succeeded
+   */
+  virtual bool lockRobotFrictionJoints(bool lock) = 0;
+
+  /**
    * Process: perform IK step, check if reached goal, check FK/GroundTruth;
    *   if check failed, perform finite motion J and update twists.
    * @return true if goal is reached

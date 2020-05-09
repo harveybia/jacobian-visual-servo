@@ -11,6 +11,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Bool.h>
 
 class UncertainIKServerROS : public UncertainIKServer
 {
@@ -29,6 +30,8 @@ public:
 
   bool recvRobotStates();
 
+  bool lockRobotFrictionJoints(bool lock);
+
 private:
   void initialize_sub();
   void initialize_pub();
@@ -39,11 +42,13 @@ private:
 
   // node info
   std::string joint_states_topic;
+  std::string friction_joint_lock_topic;
   std::string cam_im_topic;
   std::string joint_angles_topic;
 
   // publishers and subscribers
   ros::Publisher joint_state_pub;
+  ros::Publisher friction_joint_lock_pub;
   image_transport::ImageTransport itt;
   ros::Subscriber joint_angles_sub_, gd_sub_, gst_gt_sub_;
 
