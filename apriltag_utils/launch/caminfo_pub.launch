@@ -1,6 +1,6 @@
 <launch>
 
-  <node pkg="camera_info_publisher" type="camera_info_publisher_node" name="camera_info_publisher" output="screen">
+  <node pkg="apriltag_utils" type="camera_info_publisher_node" name="camera_info_publisher" output="screen">
     <rosparam>
       image_topic: /snake_cam/image_color
       img_height: 480
