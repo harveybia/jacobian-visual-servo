@@ -41,11 +41,11 @@ UncertainIKServerROS::UncertainIKServerROS(
   initialize_pub();
 
   theta_ = VectorXd(dof);
-  theta_.fill(NULL);
+  theta_.fill(0);
   theta_init_.resize(dof);
   theta_init_.fill(0);
   gst_init_ = Matrix4d::Zero();
-  while (theta_(0) == NULL || gst_init_ == Matrix4d::Zero())
+  while (ros::ok() && (theta_(0) == 0 || gst_init_ == Matrix4d::Zero()))
     recvRobotStates();
 }
 
