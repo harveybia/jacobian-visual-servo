@@ -40,6 +40,8 @@ bool UncertainIKServer::process()
   if (gd_ == Matrix4d::Zero())
   {
     cout << "Waiting for a goal pose..." << endl;
+    // TODO: add a semaphore here to wait for new pose input
+    // Note: ros::ok() == false -> signal this semaphore to break loop
     return false;
   }
 
@@ -141,6 +143,11 @@ bool UncertainIKServer::checkFK()
 
 bool UncertainIKServer::resetStateInit()
 {
+  // BUG: think about validity of receiving state init being feedback angle
+  // computed with: theta_ = drive_joint_angle + friction_joint_angle.
+  // theta_init_ = theta_ ?? or: theta_init_ = drive_joint_angle?
+
+  // This seems wrong whenever friction_joint_angle != 0
   recvRobotStates();
   gst_init_ = gst_gt_;
   theta_init_ += theta_;
