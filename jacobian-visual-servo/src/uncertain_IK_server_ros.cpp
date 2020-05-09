@@ -113,8 +113,9 @@ bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
   int itn_cnt = 0;
   VectorXd theta_prev = theta_;
   while (((theta_cmd - theta_).norm() > 0.00005
-      || (theta_prev - theta_).norm() > 0.00001)
-  && (++itn_cnt) < 10)
+       || (theta_prev - theta_).norm() > 0.00001)
+       && ((++itn_cnt) < 10)
+       && ros::ok())
   {
     theta_prev = theta_;
     recvRobotStates();
