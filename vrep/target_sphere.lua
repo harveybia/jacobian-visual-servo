@@ -19,6 +19,11 @@ end
 function sysCall_sensing()
     -- put your sensing code here
     if rosInterfacePresent then
+        -- base_link -> gst_desired
+        tf_base_desired=getTransformStamped(
+            sphereHandle,'gst_desired',baseLinkHandle,'base_link')
+        simROS.sendTransform(tf_base_desired)
+
         pose = getPose(sphereHandle, baseLinkHandle)
         simROS.publish(targetPosePub, pose)
     end
@@ -26,6 +31,24 @@ end
 
 function sysCall_cleanup()
     -- do some clean-up here
+end
+
+function getTransformStamped(objHandle,name,relTo,relToName)
+    -- This function retrieves the stamped transform for a specific object
+    t = simROS.getTime()
+    p = sim.getObjectPosition(objHandle,relTo)
+    o = sim.getObjectQuaternion(objHandle,relTo)
+	return {
+        header={
+            stamp=t,
+            frame_id=relToName
+        },
+        child_frame_id=name,
+        transform={
+            translation={x=p[1],y=p[2],z=p[3]},
+            rotation={x=o[1],y=o[2],z=o[3],w=o[4]}
+        }
+    }
 end
 
 function getPose(objectHandle, relTo)

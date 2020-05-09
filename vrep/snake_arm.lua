@@ -27,10 +27,18 @@ function subscriber_callback(msg)
 end
 
 function sysCall_threadmain()
+    local modelHandle = sim.getObjectAssociatedWithScript(sim.handle_self)
+    local objName = sim.getObjectName(modelHandle)
+    armHandle = sim.getObjectHandle(objName)
     -- Put some initialization code here
 
-    -- Disable backlash by setting this to 0
-    backlashEnable=1
+    -- Enable / disable robot deformation using V-REP User Parameter setting
+    backlashEnable = sim.getUserParameter(armHandle, 'backlashEnable')
+    if (backlashEnable == nil) then
+        backlashEnable = 0
+        sim.setUserParameter(armHandle, 'backlashEnable', backlashEnable)
+    end
+    print(string.format('backlashEnable: %d',backlashEnable))
 
     sub=simROS.subscribe('/joint_states','sensor_msgs/JointState',
         'subscriber_callback',1)

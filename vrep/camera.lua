@@ -5,18 +5,20 @@ function sysCall_init()
     if rosInterfacePresent then
         local modelHandle = sim.getObjectAssociatedWithScript(sim.handle_self)
         local objName = sim.getObjectName(modelHandle)
-        blaserCamHandle = sim.getObjectHandle(objName)
+        visionSensorHandle=sim.getObjectHandle(objName)
+        baseHandle=sim.getObjectHandle('snake_arm')
+        eeHandle=sim.getObjectHandle('snake_body10')
+        aprilHandle=sim.getObjectHandle('apriltag_frame')
+        cameraHandle=sim.getObjectHandle('ee_cam_frame')
 
         local parentHandle = sim.getObjectParent(modelHandle)
         rosImageTopic = sim.getUserParameter(parentHandle, 'rosImageTopic')
-        print(rosImageTopic)
         if (rosImageTopic == nil) then
             rosImageTopic = '/snake_cam/image_color'
             sim.setUserParameter(parentHandle, 'rosImageTopic', rosImageTopic)
         end
-        print(rosImageTopic)
+        print(string.format('rosImageTopic: %s',rosImageTopic))
 
-        sim.addStatusbarMessage('Initializing ROS stuff')
         blaserVideoPub=simROS.advertise('/snake_cam/image_color', 'sensor_msgs/Image')
         -- treat uint8 arrays as strings (much faster, tables/arrays are kind of slow in Lua)
         simROS.publisherTreatUInt8ArrayAsString(blaserVideoPub)
@@ -32,7 +34,7 @@ end
 function sysCall_sensing()
     -- Publish the image of blaser cam
     if rosInterfacePresent then
-        local data,w,h=sim.getVisionSensorCharImage(blaserCamHandle)
+        local data,w,h=sim.getVisionSensorCharImage(visionSensorHandle)
         sim.transformImage(data,{w,h},4)
 
         d={}
@@ -46,14 +48,29 @@ function sysCall_sensing()
         simROS.publish(blaserVideoPub,d)
     end
 
-    -- Publish the end effector transform and pose
+    -- Publish transforms and poses
     if rosInterfacePresent then
-        base_handle=sim.getObjectHandle('snake_arm')
-        tf_base_link_ee=getTransformStamped(blaserCamHandle,'ee_link',base_handle,'base_link')
-        -- print(tf_base_link_ee)
+        -- world -> base_link
+        tf_world_base_link=getTransformStamped(
+            baseHandle,'base_link',-1,'world')
+        simROS.sendTransform(tf_world_base_link)
+
+        -- base_link -> ee_link
+        tf_base_link_ee=getTransformStamped(
+            eeHandle,'ee_link',baseHandle,'base_link')
         simROS.sendTransform(tf_base_link_ee)
 
-        pose_base_link_ee=getPose(blaserCamHandle,base_handle)
+        -- ee_link -> camera
+        tf_ee_link_cam=getTransformStamped(
+            cameraHandle,'camera',eeHandle,'ee_link')
+        simROS.sendTransform(tf_ee_link_cam)
+
+        -- base_link -> apriltag
+        tf_base_april=getTransformStamped(
+            aprilHandle,'tag_0',baseHandle,'base_link')
+        simROS.sendTransform(tf_base_april)
+
+        pose_base_link_ee=getPose(eeHandle,baseHandle)
         simROS.publish(posePub,pose_base_link_ee)
     end
 end
@@ -68,7 +85,7 @@ end
 
 function getTransformStamped(objHandle,name,relTo,relToName)
     -- This function retrieves the stamped transform for a specific object
-    t = sim.getSystemTime()
+    t = simROS.getTime()
     p = sim.getObjectPosition(objHandle,relTo)
     o = sim.getObjectQuaternion(objHandle,relTo)
 	return {
