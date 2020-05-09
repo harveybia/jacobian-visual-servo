@@ -13,17 +13,38 @@ function process_msg(msg)
         msg.position[1], msg.position[2], msg.position[3],
         msg.position[4], msg.position[5], msg.position[6],
         msg.position[7], msg.position[8], msg.position[9]))
-    
+
+    update_passive()
+
+    sim.addStatusbarMessage(string.format("Fricti:[%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f]",
+        backlashStates[1], backlashStates[2], backlashStates[3],
+        backlashStates[4], backlashStates[5], backlashStates[6],
+        backlashStates[7], backlashStates[8], backlashStates[9]))
+
+    -- lock_passive()
+
     sim.rmlMoveToJointPositions(jointHandles,-1,
         currentVel,currentAccel,maxVel,maxAccel,maxJerk,msg.position,targetVel)
+
+    -- release_passive()
 end
 
-function subscriber_callback(msg)
+function jointstate_callback(msg)
     -- Enable queuing behavior
     --receivedMessages[#receivedMessages+1]=msg
     
     -- Queue size = 1
     receivedMessages[1]=msg
+end
+
+function jointlock_callback(msg)
+    if msg.data then
+        print('locked passive')
+        lock_passive()
+    else
+        print('released passive')
+        release_passive()
+    end
 end
 
 function sysCall_threadmain()
@@ -41,12 +62,14 @@ function sysCall_threadmain()
     print(string.format('backlashEnable: %d',backlashEnable))
 
     sub=simROS.subscribe('/joint_states','sensor_msgs/JointState',
-        'subscriber_callback',1)
+        'jointstate_callback',1)
+    sub1=simROS.subscribe('/snake_arm/lock','std_msgs/Bool',
+        'jointlock_callback',1)
     receivedMessages={}
 
     vel=4000
-    accel=4000
-    jerk=80
+    accel=1000
+    jerk=100
     currentVel={0,0,0,0,0,0,0,0,0}
     currentAccel={0,0,0,0,0,0,0,0,0}
     maxVel={vel*math.pi/180,vel*math.pi/180,vel*math.pi/180,
@@ -89,7 +112,8 @@ function sysCall_threadmain()
     backlashHandles[8]=sim.getObjectHandle(jointNames[8].."_backlash")
     backlashHandles[9]=sim.getObjectHandle(jointNames[9].."_backlash")
 
-    
+    backlashStates={0,0,0,0,0,0,0,0,0}
+
     for i=1,9,1 do
         sim.setObjectInt32Parameter(
             backlashHandles[i],sim_jointintparam_motor_enabled,1-backlashEnable)
@@ -110,7 +134,7 @@ function sysCall_threadmain()
     end
 
     t=0
-    seq=0
+    sequence=0
 
     while sim.getSimulationState()~=sim.simulation_advancing_abouttostop do
         while #receivedMessages>0 do
@@ -136,21 +160,48 @@ end
 function publishJointStates()
     -- This joint states feedback simulates actual joint angle
     -- read off from joint encoders
-    actual_joint_states={0,0,0,0,0,0,0,0,0}
+    local actual_joint_states={0,0,0,0,0,0,0,0,0}
     for i=1,9,1 do
-        jHandle=jointHandles[i]
-        bHandle=backlashHandles[i]
+        local jHandle=jointHandles[i]
+        local bHandle=backlashHandles[i]
         actual_joint_states[i]=
             sim.getJointPosition(jHandle)+sim.getJointPosition(bHandle)
     end
 
     d={}
-    d['header']={seq=0,stamp=simROS.getTime(), frame_id="a"}
+    d['header']={seq=sequence,stamp=simROS.getTime(), frame_id="a"}
     d['name']=jointNames
     d['position']=actual_joint_states
     d['velocity']={0,0,0,0,0,0,0,0,0}
     d['effort']={0,0,0,0,0,0,0,0,0}
     simROS.publish(jStatePub,d)
 
-    seq=seq+1
+    sequence=sequence+1
+end
+
+function update_passive()
+    for i=1,9,1 do
+        local bHandle=backlashHandles[i]
+        backlashStates[i]=sim.getJointPosition(bHandle)
+    end
+end
+
+function lock_passive()
+    update_passive()
+    print(backlashStates)
+    for i=1,9,1 do
+        local bHandle=backlashHandles[i]
+        sim.setJointTargetPosition(
+            bHandle,backlashStates[i])
+        sim.setObjectInt32Parameter(
+            bHandle,sim_jointintparam_motor_enabled,1)
+    end
+end
+
+function release_passive()
+    for i=1,9,1 do
+        local bHandle=backlashHandles[i]
+        sim.setObjectInt32Parameter(
+            bHandle,sim_jointintparam_motor_enabled,0)
+    end
 end
