@@ -68,7 +68,8 @@ void JacobianServoNode::timer_cb(const ros::TimerEvent &event)
     for (int i = 0; i < dof; i++)
     {
         // XXX: Change this to actual control output
-        joint_state.position[i] = sin(event.current_real.nsec) / 2;
+        joint_state.position[i] = 0;
+        // joint_state.position[i] = sin(event.current_real.nsec) / 2;
         ss << joint_state.position[i] << " ";
     }
     ss << "]";
