@@ -165,7 +165,7 @@ function publishJointStates()
         local jHandle=jointHandles[i]
         local bHandle=backlashHandles[i]
         actual_joint_states[i]=
-            sim.getJointPosition(jHandle)+sim.getJointPosition(bHandle)
+            sim.getJointPosition(jHandle)--+sim.getJointPosition(bHandle)
     end
 
     d={}
