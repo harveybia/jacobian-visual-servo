@@ -124,7 +124,7 @@ void UncertainIKServerROS::initialize_pub()
 bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
 {
   // Lock friction joints while executing motion
-  // lockRobotFrictionJoints(true);
+  lockRobotFrictionJoints(true);
 
   // send command
   assert(dof == theta_cmd.rows());
@@ -147,7 +147,7 @@ bool UncertainIKServerROS::sendJointAngles(const VectorXd &theta_cmd)
     recvRobotStates();
   }
 
-  // lockRobotFrictionJoints(false);
+  lockRobotFrictionJoints(false);
 
   return itn_cnt < 10;
 }
