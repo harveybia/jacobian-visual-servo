@@ -2,6 +2,12 @@
 This is a class project for CMU 16-711 Kinematics, Dynamics and Control,
 Spring 2020.
 
+Demo Video:
+
+[![demo_video](http://img.youtube.com/vi/B46CvOQX2VM/0.jpg)](http://www.youtube.com/watch?v=B46CvOQX2VM "Visual servoing for deformable robot arms")
+
+[Link to Project Report](https://github.com/harveybia/jacobian-visual-servo/blob/master/docs/16_711_Project_Report.pdf)
+
 ## Getting Started
 
 ### Dependencies
