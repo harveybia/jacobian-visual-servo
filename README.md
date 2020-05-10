@@ -1,4 +1,4 @@
-# jacobian-visual-servo
+# Visual Servoing for Flexible Robot Manipulators
 This is a class project for CMU 16-711 Kinematics, Dynamics and Control,
 Spring 2020.
 
@@ -40,12 +40,12 @@ roscore & # Run roscore however you like
 cd <CoppeliaSim_Installation_Dir>
 ./coppeliaSim.sh # Run after roscore is running
 
-# Open snake_arm.ttt and tap play button
+# Open snake_arm.simscene.xml and tap play button
 ```
 
 #### Running our control script
 ```sh
-rosrun jacobian-visual-servo servo_node
+rosrun jacobian-visual-servo uncertain_IK_server
 ```
 
 #### Running April Tag localization
@@ -56,7 +56,7 @@ roslaunch apriltag_ros continuous_detection.launch
 
 2. camera info publisher node
 ```
-roslaunch camera_info_publisher caminfo_pub.launch
+roslaunch apriltag_utils caminfo_pub.launch
 ```
 
 ## Authors
